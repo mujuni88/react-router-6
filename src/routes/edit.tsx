@@ -1,22 +1,32 @@
-import { ActionFunctionArgs, Form, redirect, useLoaderData, useNavigate } from "react-router-dom";
+import {
+  ActionFunctionArgs,
+  Form,
+  redirect,
+  useLoaderData,
+  useNavigate,
+} from "react-router-dom";
 import { ContactType, updateContact } from "../contacts";
 
 export async function action({ params, request }: ActionFunctionArgs) {
   const formData = await request.formData();
   const contactInfo = Object.fromEntries(formData);
-  const contact = await updateContact(params?.contactId ?? '', contactInfo);
+  const contact = await updateContact(params?.contactId ?? "", contactInfo);
   return redirect(`/contacts/${contact.id}`);
 }
+
 export default function EditContact() {
   const { contact } = useLoaderData() as { contact: ContactType };
   const navigate = useNavigate();
 
   return (
-    <Form method="post" id="contact-form" onSubmit={() => {
-
-    }} onAbort={() => {
-      alert('You have unsaved changes!');
-    }}>
+    <Form
+      method="post"
+      id="contact-form"
+      onSubmit={() => {}}
+      onAbort={() => {
+        alert("You have unsaved changes!");
+      }}
+    >
       <p>
         <span>Name</span>
         <input
@@ -55,15 +65,13 @@ export default function EditContact() {
       </label>
       <label>
         <span>Notes</span>
-        <textarea
-          name="notes"
-          defaultValue={contact?.notes}
-          rows={6}
-        />
+        <textarea name="notes" defaultValue={contact?.notes} rows={6} />
       </label>
       <p>
         <button type="submit">Save</button>
-        <button type="button" onClick={() => navigate(-1)}>Cancel</button>
+        <button type="button" onClick={() => navigate(-1)}>
+          Cancel
+        </button>
       </p>
     </Form>
   );

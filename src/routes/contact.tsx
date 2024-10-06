@@ -1,32 +1,36 @@
-import { ActionFunctionArgs, Form, LoaderFunctionArgs, redirect, useLoaderData } from "react-router-dom";
-import { getContact, ContactType, deleteContact } from "../contacts";
-
+import {
+  ActionFunctionArgs,
+  Form,
+  LoaderFunctionArgs,
+  useFetcher,
+  useLoaderData,
+} from "react-router-dom";
+import { getContact, ContactType, updateContact } from "../contacts";
 
 export async function loader({ params }: LoaderFunctionArgs) {
-  const contact = await getContact(params?.contactId ?? '');
+  const contact = await getContact(params?.contactId ?? "");
   if (!contact) {
     throw new Response("Not Found", { status: 404 });
   }
-  return contact;
+  return { contact };
 }
 
-export async function deleteContactAction({ params }: ActionFunctionArgs) {
-  const contact = await getContact(params?.contactId ?? '');
-  await deleteContact(contact?.id ?? '');
-  return redirect(`/`);
+export async function action({ request, params }: ActionFunctionArgs) {
+  const formData = await request.formData();
+  return await updateContact(params?.contactId ?? "", {
+    favorite: formData.get("favorite") === "true",
+  });
 }
 
 export default function Contact() {
-  const contact = useLoaderData() as ContactType;
+  const { contact } = useLoaderData() as { contact: ContactType };
 
   return (
     <div id="contact">
       <div>
         <img
           key={contact.avatar}
-          src={
-            `https://robohash.org/${contact.id}.png?size=200x200`
-          }
+          src={`https://robohash.org/${contact.id}.png?size=200x200`}
         />
       </div>
 
@@ -44,10 +48,7 @@ export default function Contact() {
 
         {contact.twitter && (
           <p>
-            <a
-              target="_blank"
-              href={`https://twitter.com/${contact.twitter}`}
-            >
+            <a target="_blank" href={`https://twitter.com/${contact.twitter}`}>
               {contact.twitter}
             </a>
           </p>
@@ -63,11 +64,7 @@ export default function Contact() {
             method="post"
             action="destroy"
             onSubmit={(event) => {
-              if (
-                !confirm(
-                  "Please confirm you want to delete this record."
-                )
-              ) {
+              if (!confirm("Please confirm you want to delete this record.")) {
                 event.preventDefault();
               }
             }}
@@ -85,20 +82,20 @@ type FavoriteProps = {
 };
 
 function Favorite({ contact }: FavoriteProps) {
-  const favorite = contact.favorite;
+  const fetcher = useFetcher();
+  const favorite = fetcher.formData
+    ? fetcher.formData.get("favorite") === "true"
+    : contact.favorite;
+
   return (
-    <Form method="post">
+    <fetcher.Form method="post">
       <button
         name="favorite"
         value={favorite ? "false" : "true"}
-        aria-label={
-          favorite
-            ? "Remove from favorites"
-            : "Add to favorites"
-        }
+        aria-label={favorite ? "Remove from favorites" : "Add to favorites"}
       >
         {favorite ? "★" : "☆"}
       </button>
-    </Form>
+    </fetcher.Form>
   );
 }

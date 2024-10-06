@@ -10,7 +10,7 @@ import {
   useSubmit,
 } from "react-router-dom";
 import { ContactType, createContact, getContacts } from "../contacts";
-import { useEffect } from "react";
+import { useLayoutEffect, useRef } from "react";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
@@ -36,9 +36,13 @@ export default function Root() {
   const navigate = useNavigate();
   const cnLoading = navigation.state === "loading" ? "loading" : "";
   const submit = useSubmit();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const searching = navigation.location && !!q;
 
-  useEffect(() => {
-    document.getElementById("q")?.setAttribute("value", q ?? "");
+  useLayoutEffect(() => {
+    if (!inputRef.current) return;
+
+    inputRef.current.value = q ?? "";
   }, [q]);
 
   return (
@@ -48,15 +52,19 @@ export default function Root() {
         <div>
           <Form id="search-form" role="search">
             <input
+              ref={inputRef}
               id="q"
               aria-label="Search contacts"
               placeholder="Search"
               type="search"
               name="q"
               defaultValue={q}
-              onChange={(e) => submit(e.currentTarget.form)}
+              onChange={(e) =>
+                submit(e.currentTarget.form, { replace: q != null })
+              }
+              className={searching ? "loading" : ""}
             />
-            <div id="search-spinner" aria-hidden hidden={true} />
+            <div id="search-spinner" aria-hidden hidden={!searching} />
             <div className="sr-only" aria-live="polite"></div>
           </Form>
           <button type="submit" onClick={() => navigate("/contacts/new")}>
